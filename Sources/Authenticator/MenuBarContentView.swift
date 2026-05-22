@@ -51,9 +51,9 @@ struct MenuBarContentView: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            Image(systemName: "key.fill")
+            Image(systemName: "lock.rotation")
                 .foregroundStyle(.tint)
-            Text("Authenticator")
+            Text("OTP Bar")
                 .font(.headline)
             Spacer()
             if let error = state.errorMessage {

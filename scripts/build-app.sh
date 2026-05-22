@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Authenticator.app 번들을 빌드한다.
+# OTPBar.app 번들을 빌드한다.
 # 사용법: scripts/build-app.sh [debug|release]
 set -euo pipefail
 
@@ -17,7 +17,7 @@ if [[ ! -x "$BIN" ]]; then
     exit 1
 fi
 
-APP="$ROOT/build/Authenticator.app"
+APP="$ROOT/build/OTPBar.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
 mkdir -p "$APP/Contents/Resources"

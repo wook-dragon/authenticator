@@ -10,6 +10,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var popover: NSPopover!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // /Applications 밖에서 띄운 경우 자동 이동 제안. 사용자가 동의하면
+        // 이 호출 안에서 새 위치에서 재실행되고 현재 프로세스는 종료된다.
+        AppMover.moveToApplicationsIfNeeded()
         configureStatusItem()
         configurePopover()
     }
@@ -21,7 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func configureStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         guard let button = statusItem.button else { return }
-        button.image = NSImage(systemSymbolName: "key.fill", accessibilityDescription: "Authenticator")
+        button.image = NSImage(systemSymbolName: "lock.rotation", accessibilityDescription: "OTP Bar")
         button.action = #selector(togglePopover(_:))
         button.target = self
     }
