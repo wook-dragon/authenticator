@@ -1,17 +1,13 @@
 import SwiftUI
 import AppKit
-import AVFoundation
 import UniformTypeIdentifiers
 import AuthenticatorCore
 import AuthenticatorPlatform
 
 struct AddAccountView: View {
-    enum Mode: Hashable { case camera, file }
-
     var onComplete: ([OTPAccount]) -> Void
     var onCancel: () -> Void
 
-    @State private var mode: Mode = .camera
     @State private var statusMessage: String?
     @State private var statusIsError = false
     @State private var hasResolved = false
@@ -20,44 +16,25 @@ struct AddAccountView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("새 계정 추가")
-                    .font(.title3.weight(.semibold))
+                    .font(.headline)
                 Spacer()
-                Button("취소", action: onCancel)
-                    .keyboardShortcut(.cancelAction)
+                Button {
+                    onCancel()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.cancelAction)
             }
 
-            Picker("입력 방식", selection: $mode) {
-                Text("카메라").tag(Mode.camera)
-                Text("이미지 파일").tag(Mode.file)
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-
-            content
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            FileDropZone(onSelect: decodeFile(url:))
+                .frame(height: 220)
 
             footerText
         }
         .padding(16)
-        .frame(width: 480, height: 520)
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        switch mode {
-        case .camera:
-            CameraPreviewView(
-                onPayload: handle(payload:),
-                onError: { setStatus($0, isError: true) }
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.secondary.opacity(0.3))
-            )
-        case .file:
-            FileDropZone(onSelect: decodeFile(url:))
-        }
+        .frame(width: 380)
     }
 
     @ViewBuilder
@@ -66,22 +43,15 @@ struct AddAccountView: View {
             Text(msg)
                 .font(.callout)
                 .foregroundStyle(statusIsError ? Color.red : Color.secondary)
-                .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-            Text(defaultHint)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    private var defaultHint: String {
-        switch mode {
-        case .camera:
-            return "Google Authenticator → 우상단 메뉴 → 계정 내보내기에서 표시되는 QR 코드를 비추세요."
-        case .file:
-            return "QR 코드가 포함된 이미지 또는 스크린샷을 드롭하거나 클릭해서 선택하세요."
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Google Authenticator → 우상단 메뉴 → ‘계정 내보내기’ 화면을 핸드폰에서 스크린샷한 뒤,")
+                Text("이미지 파일을 드롭하거나 클릭해서 선택하세요.")
+            }
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -121,77 +91,7 @@ struct AddAccountView: View {
     }
 }
 
-// MARK: - 카메라 미리보기
-
-private struct CameraPreviewView: NSViewRepresentable {
-    var onPayload: (String) -> Void
-    var onError: (String) -> Void
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(onPayload: onPayload, onError: onError)
-    }
-
-    func makeNSView(context: Context) -> CameraHostView {
-        let view = CameraHostView()
-        view.attach(layer: context.coordinator.scanner.previewLayer)
-        context.coordinator.startIfNeeded()
-        return view
-    }
-
-    func updateNSView(_ nsView: CameraHostView, context: Context) {}
-
-    static func dismantleNSView(_ nsView: CameraHostView, coordinator: Coordinator) {
-        Task { @MainActor in coordinator.scanner.stop() }
-    }
-
-    @MainActor
-    final class Coordinator {
-        let scanner = CameraQRScanner()
-        let onPayload: (String) -> Void
-        let onError: (String) -> Void
-        private var started = false
-
-        init(onPayload: @escaping (String) -> Void, onError: @escaping (String) -> Void) {
-            self.onPayload = onPayload
-            self.onError = onError
-        }
-
-        func startIfNeeded() {
-            guard !started else { return }
-            started = true
-            Task { @MainActor in
-                do {
-                    try await scanner.start { [weak self] payload in
-                        self?.onPayload(payload)
-                    }
-                } catch {
-                    onError("\(error)")
-                }
-            }
-        }
-    }
-
-    final class CameraHostView: NSView {
-        private weak var preview: CALayer?
-
-        func attach(layer: CALayer) {
-            wantsLayer = true
-            if self.layer == nil { self.layer = CALayer() }
-            self.layer?.backgroundColor = NSColor.black.cgColor
-            preview?.removeFromSuperlayer()
-            layer.frame = bounds
-            self.layer?.addSublayer(layer)
-            preview = layer
-        }
-
-        override func layout() {
-            super.layout()
-            preview?.frame = bounds
-        }
-    }
-}
-
-// MARK: - 파일 드롭존
+// MARK: - 이미지 파일 드롭존
 
 private struct FileDropZone: View {
     var onSelect: (URL) -> Void
@@ -210,7 +110,7 @@ private struct FileDropZone: View {
                 )
             VStack(spacing: 8) {
                 Image(systemName: "photo.on.rectangle.angled")
-                    .font(.system(size: 40))
+                    .font(.system(size: 32))
                     .foregroundStyle(.secondary)
                 Text("이미지를 끌어다 놓으세요")
                     .font(.subheadline)

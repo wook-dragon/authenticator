@@ -25,11 +25,8 @@ mkdir -p "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/Authenticator"
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
 
-echo "▶︎ ad-hoc 코드 서명 (entitlements 포함)"
-codesign --force --sign - \
-    --entitlements "$ROOT/Resources/Authenticator.entitlements" \
-    --options=runtime \
-    "$APP" >/dev/null
+echo "▶︎ ad-hoc 코드 서명"
+codesign --force --sign - --options=runtime "$APP" >/dev/null
 
 echo "✓ 빌드 완료: $APP"
 echo "  실행: open \"$APP\""

@@ -3,8 +3,10 @@ import AppKit
 import AuthenticatorCore
 
 struct MenuBarContentView: View {
+    enum Route { case list, add }
+
     @EnvironmentObject var state: AppState
-    @State private var showingAdd = false
+    @State private var route: Route = .list
     @State private var search = ""
 
     private var filtered: [OTPAccount] {
@@ -16,6 +18,24 @@ struct MenuBarContentView: View {
     }
 
     var body: some View {
+        switch route {
+        case .list:
+            listView
+        case .add:
+            AddAccountView(
+                onComplete: { accounts in
+                    let added = state.addAccounts(accounts)
+                    if added == 0 && !accounts.isEmpty {
+                        state.errorMessage = "이미 등록된 계정입니다."
+                    }
+                    route = .list
+                },
+                onCancel: { route = .list }
+            )
+        }
+    }
+
+    private var listView: some View {
         VStack(spacing: 0) {
             header
             if !state.accounts.isEmpty {
@@ -27,18 +47,6 @@ struct MenuBarContentView: View {
             footer
         }
         .frame(width: 380)
-        .sheet(isPresented: $showingAdd) {
-            AddAccountView(
-                onComplete: { added in
-                    let count = state.addAccounts(added)
-                    showingAdd = false
-                    if count == 0 && !added.isEmpty {
-                        state.errorMessage = "이미 등록된 계정입니다."
-                    }
-                },
-                onCancel: { showingAdd = false }
-            )
-        }
     }
 
     private var header: some View {
@@ -73,7 +81,7 @@ struct MenuBarContentView: View {
         if state.accounts.isEmpty {
             emptyState
         } else if filtered.isEmpty {
-            VStack(spacing: 4) {
+            VStack {
                 Text("검색 결과 없음").foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity)
@@ -87,7 +95,7 @@ struct MenuBarContentView: View {
                     }
                 }
             }
-            .frame(maxHeight: 440)
+            .frame(height: 440)
         }
     }
 
@@ -103,13 +111,13 @@ struct MenuBarContentView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
+        .padding(.vertical, 40)
     }
 
     private var footer: some View {
         HStack {
             Button {
-                showingAdd = true
+                route = .add
             } label: {
                 Label("QR 추가", systemImage: "qrcode.viewfinder")
             }

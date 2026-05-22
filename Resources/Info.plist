@@ -24,8 +24,6 @@
     <string>14.0</string>
     <key>LSUIElement</key>
     <true/>
-    <key>NSCameraUsageDescription</key>
-    <string>QR 코드를 스캔하기 위해 카메라 접근이 필요합니다. 영상은 어디에도 저장되거나 전송되지 않습니다.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
 </dict>
