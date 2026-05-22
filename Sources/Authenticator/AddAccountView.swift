@@ -125,6 +125,9 @@ private struct FileDropZone: View {
     }
 
     private func pickFile() {
+        // LSUIElement 앱은 시작 시 inactive라 NSOpenPanel을 그냥 띄우면 클릭이 안 먹는다.
+        // 사용자 명령으로 panel을 띄우는 시점에 앱을 명시적으로 활성화한다.
+        NSApp.activate(ignoringOtherApps: true)
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.image]
         panel.allowsMultipleSelection = false
